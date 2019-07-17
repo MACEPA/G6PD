@@ -23,23 +23,23 @@ def calc_bright_cells(fsc_filt, ssc_filt,
     """
     # data import
     all_fcs = FCMeasurement(ID='', datafile='PATH HERE')
-    dat = all_fcs.data
+    data = all_fcs.data
 
     # remove zero elements
-    dat = dat.loc[dat[fl1] > 0]
+    data = data.loc[data[fl1] > 0]
 
     # toggle for linear and log data
     if amplification:
-        dat[fl1] = dat[fl1].apply(math.log(10))
+        data[fl1] = data[fl1].apply(math.log(10))
 
     # run model
-    fsc_ecdf = ECDF(dat[fsc])
-    dat[fsc] = fsc_ecdf(dat[fsc])
-    ssc_ecdf = ECDF(dat[ssc])
-    dat[ssc] = ssc_ecdf(dat[ssc])
-    sub_dat = dat.loc[(dat[fsc] >= fsc_filt[0]) and (dat[fsc] <= fsc_filt[1])]
-    sub_dat = sub_dat.loc[(sub_dat[ssc] >= ssc_filt[0]) and (sub_dat[ssc] <= ssc_filt[1])]
-    fl1h = sub_dat[fl1].as_matrix()
+    fsc_ecdf = ECDF(data[fsc])
+    data[fsc] = fsc_ecdf(data[fsc])
+    ssc_ecdf = ECDF(data[ssc])
+    data[ssc] = ssc_ecdf(data[ssc])
+    sub_data = data.loc[(data[fsc] >= fsc_filt[0]) and (data[fsc] <= fsc_filt[1])]
+    sub_data = sub_data.loc[(sub_data[ssc] >= ssc_filt[0]) and (sub_data[ssc] <= ssc_filt[1])]
+    fl1h = sub_data[fl1].as_matrix()
 
     # age adjustment
     ####BLANK####
@@ -49,17 +49,17 @@ def calc_bright_cells(fsc_filt, ssc_filt,
     sub_data['density'] = density
 
     # normalize data for peak intensity = 1
-    d_sum = sub_test['density'].sum()
+    d_sum = sub_data['density'].sum()
     sub_data['freq'] = sub_data['density'].apply(lambda x: x / d_sum)
-    fl1h_max = sub_test[fl1].max()
+    fl1h_max = sub_data[fl1].max()
     sub_data['intensity'] = sub_data[fl1].apply(lambda x: 100 * (x / fl1h_max))
-    sub_test.drop_duplicates([fl1, 'density', 'freq', 'intensity'],
+    sub_data.drop_duplicates([fl1, 'density', 'freq', 'intensity'],
                              inplace=True)
-    sub_test.sort_values('intensity', inplace=True)
+    sub_data.sort_values('intensity', inplace=True)
 
     # Smoothing spline
-    smooth_spline = CubicSpline(sub_data['intensity'], sub_test['freq'])
-    freq_x = smooth_spline(sub_test['freq'])
+    smooth_spline = CubicSpline(sub_data['intensity'], sub_data['freq'])
+    freq_x = smooth_spline(sub_data['freq'])
     intense = sub_data['intensity'].as_matrix()
     freq = sub_data['freq'].as_matrix()
 
@@ -83,30 +83,30 @@ def calc_bright_cells(fsc_filt, ssc_filt,
         min_int = min(peaks_data['intensity'])
         maxima = [min_int, max_int]
         maxima_mean = sum(maxima) / len(maxima)
-        abs_condition = abs(sub_test['intensity'] - maxima_mean)
+        abs_condition = abs(sub_data['intensity'] - maxima_mean)
         min_condition = min(abs_condition)
-        mean_data = sub_test.loc[abs_condition == min_condition]
+        mean_data = sub_data.loc[abs_condition == min_condition]
         meanidx = max(mean_data['intensity'])
 
     # return percentage bright cells
     if len(maxima) == 2:
-        upper_freq = sub_test.loc[sub_test['intensity'] >= meanidx,
+        upper_freq = sub_data.loc[sub_data['intensity'] >= meanidx,
                                   'freq']
         bc_percent = round((100 * upper_freq.sum()), 1)
     elif (len(maxima) == 1) & (maxima[0] > 75):
         exp_log_maxima = math.exp(math.log(maxima[0]) - .15)
-        abs_condition = abs(sub_test['intensity'] - exp_log_maxima)
+        abs_condition = abs(sub_data['intensity'] - exp_log_maxima)
         min_condition = min(abs_condition)
-        exp_log_data = sub_test.loc[abs_condition == min_condition]
+        exp_log_data = sub_data.loc[abs_condition == min_condition]
         exp_log_val = max(exp_log_data['intensity'])
         exp_log_freq = exp_log_data.loc[
             exp_log_data['intensity'] >= exp_log_val, 'freq']
         bc_percent = round((100 * exp_log_freq.sum()), 1)
     elif (len(maxima) == 1) & (maxima[0] <= 75):
         exp_log_maxima = math.exp(math.log(maxima[0]) + .15)
-        abs_condition = abs(sub_test['intensity'] - exp_log_maxima)
+        abs_condition = abs(sub_data['intensity'] - exp_log_maxima)
         min_condition = min(abs_condition)
-        exp_log_data = sub_test.loc[abs_condition == min_condition]
+        exp_log_data = sub_data.loc[abs_condition == min_condition]
         exp_log_val = max(exp_log_data['intensity'])
         exp_log_freq = exp_log_data.loc[
             exp_log_data['intensity'] >= exp_log_val, 'freq']
