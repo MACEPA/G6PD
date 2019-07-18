@@ -41,6 +41,11 @@ def calc_bright_cells(fsc_filt, ssc_filt,
     sub_data = sub_data.loc[(sub_data[ssc] >= ssc_filt[0]) and (sub_data[ssc] <= ssc_filt[1])]
     fl1h = sub_data[fl1].as_matrix()
 
+    # mean, median, sd
+    mean_fitc = round(np.mean(100 * (fl1h / max(fl1h))), 1)
+    median_fitc = round(np.median(100 * (fl1h / max(fl1h))), 1)
+    sd_fitc = round(np.std(100 * (fl1h / max(fl1h))), 1)
+
     # age adjustment
     ####BLANK####
 
@@ -113,6 +118,8 @@ def calc_bright_cells(fsc_filt, ssc_filt,
         bc_percent = round((100 * exp_log_freq.sum()), 1)
     else:
         raise ValueError('Something went wrong!')
+
+    return bc_percent, mean_fitc, median_fitc, sd_fitc
 
 
 if __name__ == '__main__':
