@@ -1,3 +1,4 @@
+import os
 import argparse
 import numpy as np
 import pandas as pd
@@ -5,11 +6,12 @@ import pandas as pd
 from Mosaic.calc_bright_cells import calc_bright_cells
 
 
-def model_table(fsc_filt, ssc_filt,
+def model_table(input_dir, fsc_filt, ssc_filt,
                 fl1, fsc, ssc,
                 amplification=False,
                 min_peak_size=0.003):
     """
+    :param input_dir: Directory containing all FCS files
     :param fsc_filt: FSC gate
     :param ssc_filt: SSC gate
     :param fl1: FL1 channel name
@@ -19,14 +21,16 @@ def model_table(fsc_filt, ssc_filt,
     :param min_peak_size: Minimum peak size to keep
     :return: no idea yet
     """
-    zygosity = np.zeros((len(datapath), 5))
-    for i in range(len(datapath)):
+    all_files = os.listdir(input_dir)
+    zygosity = np.zeros((len(all_files), 5))
+    for i in range(len(all_files)):
+        fp = all_files[i]
         bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(
-            fsc_filt, ssc_filt, fl1, fsc, ssc,
+            fp, fsc_filt, ssc_filt, fl1, fsc, ssc,
             amplification, min_peak_size)
 
         # make table
-        zygosity[i, 1] = file_name
+        zygosity[i, 1] = fp
         zygosity[i, 2] = mean_fitc
         zygosity[i, 3] = median_fitc
         zygosity[i, 4] = sd_fitc
@@ -38,6 +42,8 @@ def model_table(fsc_filt, ssc_filt,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('-id', '--input_dir', type=str,
+                        help='Directory that contains FCS files')
     parser.add_argument('-ff', '--fsc_filt', type=list,
                         default=[.4, .95],
                         help='Minimum and maximum FSC channel values')
@@ -59,5 +65,5 @@ if __name__ == '__main__':
                         default=.003,
                         help='Minimum peak height to keep')
     args = parser.parse_args()
-    model_table(fsc_filt=args.ff, ssc_filt=args.sf, fl1=args.fl1, fsc=args.fsc,
-                ssc=args.ssc, amplification=args.a, min_peak_size=args.mps)
+    model_table(input_dir=args.id, fsc_filt=args.ff, ssc_filt=args.sf, fl1=args.fl1,
+                fsc=args.fsc, ssc=args.ssc, amplification=args.a, min_peak_size=args.mps)
