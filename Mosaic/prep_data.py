@@ -8,40 +8,6 @@ from FlowCytometryTools import FCMeasurement
 from statsmodels.distributions.empirical_distribution import ECDF
 
 
-def prep_fcs(file_path, fsc_filt, ssc_filt,
-             fl1, fsc, ssc, amplification=False):
-    """
-    :param file_path: Path to FCS file
-    :param fsc_filt: FSC gate
-    :param ssc_filt: SSC gate
-    :param fl1: FL1 channel name
-    :param fsc: FSC channel name
-    :param ssc: SSC channel name
-    :param amplification: Linear vs Log, default False (linear)
-    :return: prepped FCS data, as a pandas dataframe
-    """
-    # data import
-    all_fcs = FCMeasurement(ID='A1', datafile=file_path)
-    data = all_fcs.data
-
-    # remove zero elements
-    data = data.loc[data[fl1] > 0]
-
-    # toggle for linear and log data
-    if amplification:
-        data[fl1] = data[fl1].apply(math.log(10))
-
-    # run model
-    fsc_ecdf = ECDF(data[fsc])
-    data[fsc] = fsc_ecdf(data[fsc])
-    ssc_ecdf = ECDF(data[ssc])
-    data[ssc] = ssc_ecdf(data[ssc])
-    sub_data = data.loc[(data[fsc] >= fsc_filt[0]) and (data[fsc] <= fsc_filt[1])]
-    sub_data = sub_data.loc[(sub_data[ssc] >= ssc_filt[0]) and (sub_data[ssc] <= ssc_filt[1])]
-
-    return sub_data
-
-
 def calc_bright_cells(data, fl1, min_peak_size=0.003):
     """
     :param data: input data, pandas dataframe
@@ -129,14 +95,38 @@ def calc_bright_cells(data, fl1, min_peak_size=0.003):
     return bc_percent, mean_fitc, median_fitc, sd_fitc
 
 
-def main(file_path, fsc_filt, ssc_filt,
-         fl1, fsc, ssc, amplification=False,
-         min_peak_size=0.003):
+def prep_fcs(file_path, fsc_filt, ssc_filt,
+             fl1, fsc, ssc, amplification=False):
+    """
+    :param file_path: Path to FCS file
+    :param fsc_filt: FSC gate
+    :param ssc_filt: SSC gate
+    :param fl1: FL1 channel name
+    :param fsc: FSC channel name
+    :param ssc: SSC channel name
+    :param amplification: Linear vs Log, default False (linear)
+    :return: prepped FCS data, as a pandas dataframe
+    """
+    # data import
+    all_fcs = FCMeasurement(ID='A1', datafile=file_path)
+    data = all_fcs.data
 
-    data = prep_fcs(file_path, fsc_filt, ssc_filt,
-                    fl1, fsc, ssc, amplification)
+    # remove zero elements
+    data = data.loc[data[fl1] > 0]
 
-    bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, fl1, min_peak_size)
+    # toggle for linear and log data
+    if amplification:
+        data[fl1] = data[fl1].apply(math.log(10))
+
+    # run model
+    fsc_ecdf = ECDF(data[fsc])
+    data[fsc] = fsc_ecdf(data[fsc])
+    ssc_ecdf = ECDF(data[ssc])
+    data[ssc] = ssc_ecdf(data[ssc])
+    sub_data = data.loc[(data[fsc] >= fsc_filt[0]) and (data[fsc] <= fsc_filt[1])]
+    sub_data = sub_data.loc[(sub_data[ssc] >= ssc_filt[0]) and (sub_data[ssc] <= ssc_filt[1])]
+
+    return sub_data
 
 
 if __name__ == '__main__':
@@ -164,5 +154,5 @@ if __name__ == '__main__':
                         default=.003,
                         help='Minimum peak height to keep')
     args = parser.parse_args()
-    main(file_path=args.fp, fsc_filt=args.ff, ssc_filt=args.sf, fl1=args.fl1,
-         fsc=args.fsc, ssc=args.ssc, amplification=args.a, min_peak_size=args.mps)
+    calc_bright_cells(file_path=args.fp, fsc_filt=args.ff, ssc_filt=args.sf, fl1=args.fl1,
+                      fsc=args.fsc, ssc=args.ssc, amplification=args.a, min_peak_size=args.mps)

@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import pandas as pd
 # import calc_bright_cells function
-from Mosaic.calc_bright_cells import calc_bright_cells
+from Mosaic.calc_bright_cells import prep_fcs, calc_bright_cells
 
 
 def model_table(input_dir, fsc_filt, ssc_filt,
@@ -25,9 +25,10 @@ def model_table(input_dir, fsc_filt, ssc_filt,
     zygosity = np.zeros((len(all_files), 5))
     for i in range(len(all_files)):
         fp = all_files[i]
-        bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(
-            fp, fsc_filt, ssc_filt, fl1, fsc, ssc,
-            amplification, min_peak_size)
+        data = prep_fcs(fp, fsc_filt, ssc_filt, fl1, fsc, ssc, amplification)
+        bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data,
+                                                                        fl1,
+                                                                        min_peak_size)
 
         # make table
         zygosity[i, 1] = fp
@@ -38,6 +39,7 @@ def model_table(input_dir, fsc_filt, ssc_filt,
 
     zygo_results = pd.DataFrame(data=zygosity, columns=['File Name', 'Mean FL1', 'Median FL1',
                                                         'Std Dev FL1', 'Percent Bright Cells'])
+    return zygo_results
 
 
 if __name__ == '__main__':
