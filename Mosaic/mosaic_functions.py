@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import pandas as pd
@@ -8,16 +9,10 @@ from FlowCytometryTools import FCMeasurement
 from statsmodels.distributions.empirical_distribution import ECDF
 
 
-def prep_fcs(file_path, fsc_filt, ssc_filt,
-             fl1, fsc, ssc, amplification=False):
+def prep_fcs(file_path, mosaic_object):
     """
     :param file_path: Path to FCS file
-    :param fsc_filt: FSC gate
-    :param ssc_filt: SSC gate
-    :param fl1: FL1 channel name
-    :param fsc: FSC channel name
-    :param ssc: SSC channel name
-    :param amplification: Linear vs Log, default False (linear)
+    :param mosaic_object:
     :return: prepped FCS data, as a pandas dataframe
     """
     # data import
@@ -25,31 +20,34 @@ def prep_fcs(file_path, fsc_filt, ssc_filt,
     data = all_fcs.data
 
     # remove zero elements
-    data = data.loc[data[fl1] > 0]
+    data = data.loc[data[mosaic_object.fl1] > 0]
 
     # toggle for linear and log data
-    if amplification:
-        data[fl1] = data[fl1].apply(math.log(10))
+    if mosaic_object.amplification:
+        data[mosaic_object.fl1] = data[mosaic_object.fl1].apply(math.log(10))
 
     # run model
-    fsc_ecdf = ECDF(data[fsc])
-    data[fsc] = fsc_ecdf(data[fsc])
-    ssc_ecdf = ECDF(data[ssc])
-    data[ssc] = ssc_ecdf(data[ssc])
-    sub_data = data.loc[(data[fsc] >= fsc_filt[0]) and (data[fsc] <= fsc_filt[1])]
-    sub_data = sub_data.loc[(sub_data[ssc] >= ssc_filt[0]) and (sub_data[ssc] <= ssc_filt[1])]
+    fsc_ecdf = ECDF(data[mosaic_object.fsc])
+    data[mosaic_object.fsc] = fsc_ecdf(data[mosaic_object.fsc])
+    ssc_ecdf = ECDF(data[mosaic_object.ssc])
+    data[mosaic_object.ssc] = ssc_ecdf(data[mosaic_object.ssc])
+    sub_filter1 = data[mosaic_object.fsc] >= mosaic_object.fsc_filt[0]
+    sub_filter2 = data[mosaic_object.fsc] <= mosaic_object.fsc_filt[1]
+    sub_data = data.loc[sub_filter1 and sub_filter2]
+    sub_filter3 = sub_data[mosaic_object.ssc] >= mosaic_object.ssc_filt[0]
+    sub_filter4 = sub_data[mosaic_object.ssc] <= mosaic_object.ssc_filt[1]
+    sub_data = sub_data.loc[sub_filter3 and sub_filter4]
 
     return sub_data
 
 
-def calc_bright_cells(data, fl1, min_peak_size=0.003):
+def calc_bright_cells(data, mosaic_object):
     """
     :param data: input data, pandas dataframe
-    :param fl1: FL1 channel name
-    :param min_peak_size: Minimum peak size to keep
+    :param mosaic_object:
     :return: bc_percent, mean_fitc, median_fitc, sd_fitc (all floats)
     """
-    fl1h = data[fl1].as_matrix()
+    fl1h = data[mosaic_object.fl1].as_matrix()
 
     # mean, median, sd
     mean_fitc = round(np.mean(100 * (fl1h / max(fl1h))), 1)
@@ -66,10 +64,10 @@ def calc_bright_cells(data, fl1, min_peak_size=0.003):
     # normalize data for peak intensity = 1
     d_sum = data['density'].sum()
     data['freq'] = data['density'].apply(lambda x: x / d_sum)
-    fl1h_max = data[fl1].max()
-    data['intensity'] = data[fl1].apply(lambda x: 100 * (x / fl1h_max))
-    data.drop_duplicates([fl1, 'density', 'freq', 'intensity'],
-                             inplace=True)
+    fl1h_max = data[mosaic_object.fl1].max()
+    data['intensity'] = data[mosaic_object.fl1].apply(lambda x: 100 * (x / fl1h_max))
+    data.drop_duplicates([mosaic_object.fl1, 'density', 'freq', 'intensity'],
+                         inplace=True)
     data.sort_values('intensity', inplace=True)
 
     # Smoothing spline
@@ -86,7 +84,7 @@ def calc_bright_cells(data, fl1, min_peak_size=0.003):
     # return data subset to just peaks
     peaks_data = data.loc[data['freq'].isin(y_vals)]
     peaks_data = peaks_data.loc[peaks_data['intensity'].isin(x_vals)]
-    peaks_data = peaks_data.loc[peaks_data['freq'] > min_peak_size]
+    peaks_data = peaks_data.loc[peaks_data['freq'] > mosaic_object.min_peak_size]
     peaks_data = peaks_data.loc[peaks_data['intensity'] < 99]
 
     # return maixma and meanidx(?)
@@ -105,7 +103,7 @@ def calc_bright_cells(data, fl1, min_peak_size=0.003):
     # return percentage bright cells
     if len(maxima) == 2:
         upper_freq = data.loc[data['intensity'] >= meanidx,
-                                  'freq']
+                              'freq']
         bc_percent = round((100 * upper_freq.sum()), 1)
     elif (len(maxima) == 1) & (maxima[0] > 75):
         exp_log_maxima = math.exp(math.log(maxima[0]) - .15)
@@ -129,29 +127,14 @@ def calc_bright_cells(data, fl1, min_peak_size=0.003):
     return bc_percent, mean_fitc, median_fitc, sd_fitc
 
 
-def model_table(input_dir, fsc_filt, ssc_filt,
-                fl1, fsc, ssc,
-                amplification=False,
-                min_peak_size=0.003):
-    """
-    :param input_dir: Directory containing all FCS files
-    :param fsc_filt: FSC gate
-    :param ssc_filt: SSC gate
-    :param fl1: FL1 channel name
-    :param fsc: FSC channel name
-    :param ssc: SSC channel name
-    :param amplification: Linear vs Log, default False (linear)
-    :param min_peak_size: Minimum peak size to keep
-    :return: no idea yet
-    """
-    all_files = os.listdir(input_dir)
+def model_table(mosaic_object):
+    all_files = mosaic_object.get_files()
     zygosity = np.zeros((len(all_files), 5))
     for i in range(len(all_files)):
         fp = all_files[i]
-        data = prep_fcs(fp, fsc_filt, ssc_filt, fl1, fsc, ssc, amplification)
+        data = prep_fcs(fp, mosaic_object)
         bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data,
-                                                                        fl1,
-                                                                        min_peak_size)
+                                                                        mosaic_object)
 
         # make table
         zygosity[i, 1] = fp

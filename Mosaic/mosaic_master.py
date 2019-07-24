@@ -2,23 +2,24 @@ import os
 import argparse
 from FlowCytometryTools import FCMeasurement
 from Mosaic.mosaic_functions import model_table, prep_fcs, calc_bright_cells
+from Mosaic.mosaic_classes import MosaicObject
 
 
 def main(input_dir, fsc_filt, ssc_filt,
          fl1, fsc, ssc, amplification=False,
          min_peak_size=0.003):
+
+    mosaic = MosaicObject(input_dir, fsc_filt, ssc_filt,
+                          fl1, fsc, ssc, amplification,
+                          min_peak_size)
     test = FCMeasurement(ID='', datafile='{}/1.fcs'.format(input_dir))
     channels = test.channels
 
-    table = model_table(input_dir, fsc_filt, ssc_filt,
-                        fl1, fsc, ssc, amplification,
-                        min_peak_size)
+    table = model_table(mosaic)
 
-    file_path = os.listdir(input_dir)
-    data = prep_fcs(file_path, fsc_filt, ssc_filt,
-                    fl1, fsc, ssc, amplification)
-
-    bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, fl1, min_peak_size)
+    file_path = mosaic.get_files()
+    data = prep_fcs(file_path, mosaic)
+    bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
 
 
 if __name__ == '__main__':
