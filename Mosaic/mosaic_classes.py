@@ -1,7 +1,7 @@
 import os
 
 
-class MosaicObject:
+class MosaicMetadata:
     def __init__(self, input_dir, fsc_filt, ssc_filt,
                  fl1, fsc, ssc, amplification,
                  min_peak_size):
