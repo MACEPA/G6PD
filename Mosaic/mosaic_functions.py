@@ -15,7 +15,7 @@ def prep_fcs(file_path, mosaic_object):
     :return: prepped FCS data, as a pandas dataframe
     """
     # data import
-    all_fcs = FCMeasurement(ID='A1', datafile=file_path)
+    all_fcs = FCMeasurement(ID='A1l', datafile=file_path)
     data = all_fcs.data
 
     # remove zero elements
@@ -30,12 +30,12 @@ def prep_fcs(file_path, mosaic_object):
     data[mosaic_object.fsc] = fsc_ecdf(data[mosaic_object.fsc])
     ssc_ecdf = ECDF(data[mosaic_object.ssc])
     data[mosaic_object.ssc] = ssc_ecdf(data[mosaic_object.ssc])
-    sub_filter1 = data[mosaic_object.fsc] >= mosaic_object.fsc_filt[0]
-    sub_filter2 = data[mosaic_object.fsc] <= mosaic_object.fsc_filt[1]
-    sub_data = data.loc[sub_filter1 and sub_filter2]
+    sub_filter1 = (data[mosaic_object.fsc] >= mosaic_object.fsc_filt[0])
+    sub_filter2 = (data[mosaic_object.fsc] <= mosaic_object.fsc_filt[1])
+    sub_data = data.loc[sub_filter1 & sub_filter2]
     sub_filter3 = sub_data[mosaic_object.ssc] >= mosaic_object.ssc_filt[0]
     sub_filter4 = sub_data[mosaic_object.ssc] <= mosaic_object.ssc_filt[1]
-    sub_data = sub_data.loc[sub_filter3 and sub_filter4]
+    sub_data = sub_data.loc[sub_filter3 & sub_filter4]
 
     return sub_data
 
