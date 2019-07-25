@@ -87,6 +87,8 @@ def calc_bright_cells(data, mosaic_object):
     peaks_data = peaks_data.loc[peaks_data['intensity'].isin(x_vals)]
     peaks_data = peaks_data.loc[peaks_data['freq'] > mosaic_object.min_peak_size]
     peaks_data = peaks_data.loc[peaks_data['intensity'] < 99]
+    if len(peaks_data) == 0:
+        return 0, mean_fitc, median_fitc, sd_fitc
 
     # return maixma and meanidx(?)
     max_int = max(peaks_data['intensity'])
