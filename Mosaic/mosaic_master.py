@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from FlowCytometryTools import FCMeasurement
 from mosaic_functions import model_table, prep_fcs, calc_bright_cells
 from mosaic_classes import MosaicMetadata
@@ -6,7 +7,7 @@ from mosaic_classes import MosaicMetadata
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-# from dash_table import DataTable as DT
+from dash_table import DataTable as DT
 from dash.dependencies import Input, Output, State
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -80,12 +81,10 @@ app.layout = html.Div([
     ),
     html.Div(
         id='test_id'
+    ),
+    DT(
+        id='df'
     )
-    # DT(
-    #     id='df',
-    #     columns=[],
-    #     data={}
-    # )
 ])
 
 
@@ -106,7 +105,8 @@ def set_file_paths(n_clicks, directory):
 
 
 @app.callback(
-    Output('test_id', 'children'),
+    [Output('df', 'data'),
+     Output('df', 'columns')],
     [Input('submit_button', 'n_clicks')],
     [State('input_dir', 'value'),
      State('file_dropdown', 'value'),
@@ -130,15 +130,17 @@ def main(n_clicks, input_dir, file_dropdown, fsc_lower, fsc_upper,
                                 min_peak_size)
         # test = FCMeasurement(ID='', datafile=file_dropdown)
         # channels = test.channels
-        #
-        # # table = model_table(mosaic)
-        #
-        data = prep_fcs(file_dropdown, mosaic)
-        bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
 
-        return bc_percent
+        table = model_table(mosaic)
+
+        # data = prep_fcs(file_dropdown, mosaic)
+        # bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
+
+        dash_data = table.to_dict('records')
+        dash_columns = [{'name': i, 'id': i} for i in table.columns]
+        return dash_data, dash_columns
     else:
-        return "waiting..."
+        return pd.DataFrame().to_dict('records'), [{'name': '', 'id': ''}]
 
 
 # @app.callback(

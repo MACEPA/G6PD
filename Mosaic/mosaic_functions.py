@@ -1,3 +1,4 @@
+import os
 import math
 import numpy as np
 import pandas as pd
@@ -128,21 +129,19 @@ def calc_bright_cells(data, mosaic_object):
 
 
 def model_table(mosaic_object):
-    all_files = mosaic_object.get_files()
-    zygosity = np.zeros((len(all_files), 5))
-    for i in range(len(all_files)):
-        fp = all_files[i]
+    all_files = os.listdir(mosaic_object.input_dir)
+    all_files = ['{}/{}'.format(mosaic_object.input_dir, file) for file in all_files if file.endswith('.fcs')]
+    zygosity = []
+    for fp in all_files[:2]:
+        print(fp)
         data = prep_fcs(fp, mosaic_object)
         bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data,
                                                                         mosaic_object)
-
         # make table
-        zygosity[i, 1] = fp
-        zygosity[i, 2] = mean_fitc
-        zygosity[i, 3] = median_fitc
-        zygosity[i, 4] = sd_fitc
-        zygosity[i, 5] = bc_percent
+        file_df = pd.DataFrame.from_records([{'File Name': fp, 'Mean FL1': mean_fitc, 'Median FL1': median_fitc,
+                                              'Std Dev FL1': sd_fitc, 'Percent Bright Cells': bc_percent}],
+                                            index='File Name').reset_index()
+        zygosity.append(file_df)
 
-    zygo_results = pd.DataFrame(data=zygosity, columns=['File Name', 'Mean FL1', 'Median FL1',
-                                                        'Std Dev FL1', 'Percent Bright Cells'])
+    zygo_results = pd.concat(zygosity)
     return zygo_results
