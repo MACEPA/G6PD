@@ -23,6 +23,3 @@ class MosaicMetadata:
         self.ssc = ssc
         self.amplification = amplification
         self.min_peak_size = min_peak_size
-
-    def get_files(self):
-        return os.listdir(self.input_dir)
