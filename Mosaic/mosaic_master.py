@@ -65,12 +65,13 @@ app.layout = html.Div([
     dcc.RadioItems(
         id='amplification',
         options=[{'label': 'True', 'value': 1},
-                 {'label': 'False', 'value': 0}]
+                 {'label': 'False', 'value': 0}],
+        value=1
     ),
     dcc.Input(
         id='min_peak_size',
         type='number',
-        value=.003
+        value=.00003
     ),
     html.Button(
         id='submit_button',
@@ -100,7 +101,7 @@ app.layout = html.Div([
 def set_file_paths(n_clicks, directory):
     files = os.listdir(directory)
     files = [file for file in files if file.endswith('.fcs')]
-    options = [{'label': file, 'value': os.path.join(directory, file)} for file in files]
+    options = [{'label': file, 'value': '{}/{}'.format(directory, file)} for file in files]
     return options
 
 
@@ -119,25 +120,25 @@ def set_file_paths(n_clicks, directory):
      State('amplification', 'value'),
      State('min_peak_size', 'value')])
 def main(n_clicks, input_dir, file_dropdown, fsc_lower, fsc_upper,
-         ssc_lower, ssc_upper, fl1, fsc, ssc, amplification=0,
-         min_peak_size=0.003):
+         ssc_lower, ssc_upper, fl1, fsc, ssc, amplification,
+         min_peak_size):
     fsc_filt = [fsc_lower, fsc_upper]
     ssc_filt = [ssc_lower, ssc_upper]
     if file_dropdown:
         mosaic = MosaicMetadata(input_dir, fsc_filt, ssc_filt,
                                 fl1, fsc, ssc, amplification,
                                 min_peak_size)
-        test = FCMeasurement(ID='', datafile=file_dropdown)
-        channels = test.channels
-
-        # table = model_table(mosaic)
-
+        # test = FCMeasurement(ID='', datafile=file_dropdown)
+        # channels = test.channels
+        #
+        # # table = model_table(mosaic)
+        #
         data = prep_fcs(file_dropdown, mosaic)
         bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
 
         return bc_percent
     else:
-        return 999999999999999999
+        return "waiting..."
 
 
 # @app.callback(
@@ -157,3 +158,18 @@ def main(n_clicks, input_dir, file_dropdown, fsc_lower, fsc_upper,
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+    # input_dir = 'C:/Users/lzoeckler/Desktop/maria_data/Archive_facs'
+    # file_path = 'C:/Users/lzoeckler/Desktop/maria_data/Archive_facs/1.fcs'
+    # fsc_filt = [0.4, 0.95]
+    # ssc_filt = [0.05, 0.6]
+    # fl1 = 'FL1-A'
+    # fsc = 'FSC-H'
+    # ssc = 'SSC-H'
+    # amplification = 1
+    # min_peak_size = 0.00003
+    # mosaic_object = MosaicMetadata(input_dir, fsc_filt, ssc_filt,
+    #                                fl1, fsc, ssc, amplification,
+    #                                min_peak_size)
+    # data = prep_fcs(file_path, mosaic_object)
+    # bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic_object)
+    # print(bc_percent)

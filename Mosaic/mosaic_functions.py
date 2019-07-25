@@ -17,13 +17,14 @@ def prep_fcs(file_path, mosaic_object):
     # data import
     all_fcs = FCMeasurement(ID='A1l', datafile=file_path)
     data = all_fcs.data
+    data = data[[mosaic_object.fsc, mosaic_object.ssc, mosaic_object.fl1]]
 
     # remove zero elements
     data = data.loc[data[mosaic_object.fl1] > 0]
 
     # toggle for linear and log data
     if mosaic_object.amplification:
-        data[mosaic_object.fl1] = data[mosaic_object.fl1].apply(math.log(10))
+        data[mosaic_object.fl1] = data[mosaic_object.fl1].apply(math.log)
 
     # run model
     fsc_ecdf = ECDF(data[mosaic_object.fsc])
@@ -46,7 +47,7 @@ def calc_bright_cells(data, mosaic_object):
     :param mosaic_object:
     :return: bc_percent, mean_fitc, median_fitc, sd_fitc (all floats)
     """
-    fl1h = data[mosaic_object.fl1].as_matrix()
+    fl1h = data[mosaic_object.fl1].values
 
     # mean, median, sd
     mean_fitc = round(np.mean(100 * (fl1h / max(fl1h))), 1)
@@ -72,8 +73,8 @@ def calc_bright_cells(data, mosaic_object):
     # Smoothing spline
     smooth_spline = CubicSpline(data['intensity'], data['freq'])
     freq_x = smooth_spline(data['freq'])
-    intense = data['intensity'].as_matrix()
-    freq = data['freq'].as_matrix()
+    intense = data['intensity'].values
+    freq = data['freq'].values
 
     # peak finding function!
     peaks1, properties1 = find_peaks(freq_x)
