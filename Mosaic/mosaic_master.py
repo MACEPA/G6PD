@@ -16,19 +16,6 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
     dcc.Input(
-        id='input_dir',
-        type='text',
-        value='C:/Users/lzoeckler/Desktop/maria_data/Archive_facs'
-    ),
-    html.Button(
-        id='set_dir',
-        n_clicks=0,
-        children='Set directory'
-    ),
-    dcc.Dropdown(
-        id='file_dropdown'
-    ),
-    dcc.Input(
         id='fsc_lower',
         type='number',
         value=.4
@@ -84,6 +71,19 @@ app.layout = html.Div([
     ),
     DT(
         id='df'
+    ),
+    dcc.Input(
+        id='input_dir',
+        type='text',
+        value='C:/Users/lzoeckler/Desktop/maria_data/Archive_facs'
+    ),
+    html.Button(
+        id='set_dir',
+        n_clicks=0,
+        children='Set directory'
+    ),
+    dcc.Dropdown(
+        id='file_dropdown'
     )
 ])
 
@@ -109,7 +109,6 @@ def set_file_paths(n_clicks, directory):
      Output('df', 'columns')],
     [Input('submit_button', 'n_clicks')],
     [State('input_dir', 'value'),
-     State('file_dropdown', 'value'),
      State('fsc_lower', 'value'),
      State('fsc_upper', 'value'),
      State('ssc_lower', 'value'),
@@ -119,12 +118,12 @@ def set_file_paths(n_clicks, directory):
      State('ssc', 'value'),
      State('amplification', 'value'),
      State('min_peak_size', 'value')])
-def main(n_clicks, input_dir, file_dropdown, fsc_lower, fsc_upper,
+def main(n_clicks, input_dir, fsc_lower, fsc_upper,
          ssc_lower, ssc_upper, fl1, fsc, ssc, amplification,
          min_peak_size):
     fsc_filt = [fsc_lower, fsc_upper]
     ssc_filt = [ssc_lower, ssc_upper]
-    if file_dropdown:
+    if n_clicks > 0:
         mosaic = MosaicMetadata(input_dir, fsc_filt, ssc_filt,
                                 fl1, fsc, ssc, amplification,
                                 min_peak_size)
@@ -133,14 +132,39 @@ def main(n_clicks, input_dir, file_dropdown, fsc_lower, fsc_upper,
 
         table = model_table(mosaic)
 
-        # data = prep_fcs(file_dropdown, mosaic)
-        # bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
-
         dash_data = table.to_dict('records')
         dash_columns = [{'name': i, 'id': i} for i in table.columns]
         return dash_data, dash_columns
     else:
         return pd.DataFrame().to_dict('records'), [{'name': '', 'id': ''}]
+
+
+@app.callback(
+    [Output('graph', 'figure')],
+    [Input('set_file', 'n_clicks')],
+    [State('file_dropdown', 'value'),
+     State('input_dir', 'value'),
+     State('fsc_lower', 'value'),
+     State('fsc_upper', 'value'),
+     State('ssc_lower', 'value'),
+     State('ssc_upper', 'value'),
+     State('fl1', 'value'),
+     State('fsc', 'value'),
+     State('ssc', 'value'),
+     State('amplification', 'value'),
+     State('min_peak_size', 'value')]
+)
+def generate_graph(n_clicks, file_dropdown, input_dir, fsc_lower, fsc_upper,
+                   ssc_lower, ssc_upper, fl1, fsc, ssc, amplification,
+                   min_peak_size):
+    fsc_filt = [fsc_lower, fsc_upper]
+    ssc_filt = [ssc_lower, ssc_upper]
+    if n_clicks > 0:
+        mosaic = MosaicMetadata(input_dir, fsc_filt, ssc_filt,
+                                fl1, fsc, ssc, amplification,
+                                min_peak_size)
+        data = prep_fcs(file_dropdown, mosaic)
+        bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data, mosaic)
 
 
 # @app.callback(
