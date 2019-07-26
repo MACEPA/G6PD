@@ -127,7 +127,9 @@ def calc_bright_cells(data, mosaic_object):
     else:
         raise ValueError('Something went wrong!')
 
-    return bc_percent, mean_fitc, median_fitc, sd_fitc
+    bright_outputs = (bc_percent, mean_fitc, median_fitc, sd_fitc)
+    plot_outputs = (x_vals, y_vals, intense, freq)
+    return bright_outputs, plot_outputs
 
 
 def model_table(mosaic_object):
@@ -137,8 +139,8 @@ def model_table(mosaic_object):
     for fp in all_files[:2]:
         print(fp)
         data = prep_fcs(fp, mosaic_object)
-        bc_percent, mean_fitc, median_fitc, sd_fitc = calc_bright_cells(data,
-                                                                        mosaic_object)
+        bright_outputs, plot_outputs = calc_bright_cells(data, mosaic_object)
+        bc_percent, mean_fitc, median_fitc, sd_fitc = bright_outputs
         # make table
         file_df = pd.DataFrame.from_records([{'File Name': fp, 'Mean FL1': mean_fitc, 'Median FL1': median_fitc,
                                               'Std Dev FL1': sd_fitc, 'Percent Bright Cells': bc_percent}],
