@@ -8,6 +8,8 @@ from scipy.interpolate import CubicSpline
 from FlowCytometryTools import FCMeasurement
 from statsmodels.distributions.empirical_distribution import ECDF
 
+from mosaic_classes import MosaicOutputs
+
 
 def prep_fcs(file_path, mosaic_object):
     """
@@ -127,9 +129,9 @@ def calc_bright_cells(data, mosaic_object):
     else:
         raise ValueError('Something went wrong!')
 
-    bright_outputs = (bc_percent, mean_fitc, median_fitc, sd_fitc)
-    plot_outputs = (x_vals, y_vals, intense, freq)
-    return bright_outputs, plot_outputs
+    outputs = MosaicOutputs(x_vals, y_vals, intense, freq,
+                            bc_percent, mean_fitc, median_fitc, sd_fitc)
+    return outputs
 
 
 def model_table(mosaic_object):

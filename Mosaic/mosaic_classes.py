@@ -1,6 +1,3 @@
-import os
-
-
 class MosaicMetadata:
     def __init__(self, input_dir, fsc_filt, ssc_filt,
                  fl1, fsc, ssc, amplification,
@@ -23,3 +20,17 @@ class MosaicMetadata:
         self.ssc = ssc
         self.amplification = amplification
         self.min_peak_size = min_peak_size
+
+
+class MosaicOutputs:
+    def __init__(self, x_vals, y_vals, intensity, frequency,
+                 bc_percent, mean_fitc, median_fitc, sd_fitc):
+        self.x_vals = x_vals
+        self.y_vals = y_vals
+        self.intensity = intensity
+        self.frequency = frequency
+        self.bc_percent = bc_percent
+        self.mean_fitc = mean_fitc
+        self.median_fitc = median_fitc
+        self.sd_fitc = sd_fitc
+

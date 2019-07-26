@@ -13,32 +13,34 @@ def main(input_dir, fsc_filt, ssc_filt,
                             min_peak_size)
 
     table = model_table(mosaic)
+    table.to_csv('C:/Users/lzoeckler/Desktop/mosaic_zygosity.csv')
 
-    data = prep_fcs(file_dropdown, mosaic)
-    bright_outputs, plot_outputs = calc_bright_cells(data, mosaic)
-    x_vals, y_vals, intense, freq = plot_outputs
-    fig, ax = plt.subplots()
-    plt.plot(intense, freq)
-    plt.plot(x_vals, y_vals, "o", color='k')
+    # data = prep_fcs(file_dropdown, mosaic)
+    # bright_outputs, plot_outputs = calc_bright_cells(data, mosaic)
+    # x_vals, y_vals, intense, freq = plot_outputs
+    # fig, ax = plt.subplots()
+    # plt.plot(intense, freq)
+    # plt.plot(x_vals, y_vals, "o", color='k')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-id', '--input_dir', type=str,
+                        default='C:/Users/lzoeckler/Desktop/maria_data/Archive_facs',
                         help='Directory that contains FCS files')
     parser.add_argument('-ff', '--fsc_filt', type=list,
                         default=[.4, .95],
                         help='Minimum and maximum FSC channel values')
-    parser.add_argument('-sf', '-ssc_filt', type=list,
+    parser.add_argument('-sf', '--ssc_filt', type=list,
                         default=[.05, .6],
                         help='Minimum and maximum SSC channel values')
-    parser.add_argument('-fl1', type=str,
+    parser.add_argument('--fl1', type=str,
                         default='FL1-A',
                         help='Name of the FL1 channel')
-    parser.add_argument('-fsc', type=str,
+    parser.add_argument('--fsc', type=str,
                         default='FSC-H',
                         help='Name of the FSC channel')
-    parser.add_argument('-ssc', type=str,
+    parser.add_argument('--ssc', type=str,
                         default='SSC-H',
                         help='Name of the SSC channel')
     parser.add_argument('-a', '--amplification', action='store_true',
@@ -47,5 +49,6 @@ if __name__ == '__main__':
                         default=.003,
                         help='Minimum peak height to keep')
     args = parser.parse_args()
-    main(input_dir=args.id, fsc_filt=args.ff, ssc_filt=args.sf, fl1=args.fl1,
-         fsc=args.fsc, ssc=args.ssc, amplification=args.a, min_peak_size=args.mps)
+    main(input_dir=args.input_dir, fsc_filt=args.fsc_filt, ssc_filt=args.ssc_filt,
+         fl1=args.fl1, fsc=args.fsc, ssc=args.ssc, amplification=args.amplification,
+         min_peak_size=args.min_peak_size)
