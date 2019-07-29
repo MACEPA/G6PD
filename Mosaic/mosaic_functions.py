@@ -90,7 +90,8 @@ def calc_bright_cells(data, mosaic_object):
     peaks_data = peaks_data.loc[peaks_data['freq'] > mosaic_object.min_peak_size]
     peaks_data = peaks_data.loc[peaks_data['intensity'] < 99]
     if len(peaks_data) == 0:
-        return 0, mean_fitc, median_fitc, sd_fitc
+        return MosaicOutputs(x_vals, y_vals, intense, freq,
+                             0, mean_fitc, median_fitc, sd_fitc)
 
     # return maixma and meanidx(?)
     max_int = max(peaks_data['intensity'])
@@ -129,25 +130,25 @@ def calc_bright_cells(data, mosaic_object):
     else:
         raise ValueError('Something went wrong!')
 
-    outputs = MosaicOutputs(x_vals, y_vals, intense, freq,
-                            bc_percent, mean_fitc, median_fitc, sd_fitc)
-    return outputs
+    return MosaicOutputs(x_vals, y_vals, intense, freq,
+                         bc_percent, mean_fitc, median_fitc, sd_fitc)
 
 
 def model_table(mosaic_object):
     all_files = os.listdir(mosaic_object.input_dir)
     all_files = ['{}/{}'.format(mosaic_object.input_dir, file) for file in all_files if file.endswith('.fcs')]
     zygosity = []
-    for fp in all_files[:2]:
-        print(fp)
-        data = prep_fcs(fp, mosaic_object)
-        bright_outputs, plot_outputs = calc_bright_cells(data, mosaic_object)
-        bc_percent, mean_fitc, median_fitc, sd_fitc = bright_outputs
-        # make table
-        file_df = pd.DataFrame.from_records([{'File Name': fp, 'Mean FL1': mean_fitc, 'Median FL1': median_fitc,
-                                              'Std Dev FL1': sd_fitc, 'Percent Bright Cells': bc_percent}],
-                                            index='File Name').reset_index()
-        zygosity.append(file_df)
-
+    for fp in all_files:
+        try:
+            data = prep_fcs(fp, mosaic_object)
+            outputs = calc_bright_cells(data, mosaic_object)
+            # make table
+            file_df = pd.DataFrame.from_records([{'File Name': fp, 'Mean FL1': outputs.mean_fitc,
+                                                  'Median FL1': outputs.median_fitc, 'Std Dev FL1': outputs.sd_fitc,
+                                                  'Percent Bright Cells': outputs.bc_percent}],
+                                                index='File Name').reset_index()
+            zygosity.append(file_df)
+        except KeyError:
+            print("THIS FILE BROKE: {}".format(fp))
     zygo_results = pd.concat(zygosity)
     return zygo_results
