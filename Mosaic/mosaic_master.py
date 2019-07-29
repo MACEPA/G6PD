@@ -1,5 +1,6 @@
 import argparse
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 # custom functions and classes
 from mosaic_functions import model_table, prep_fcs, calc_bright_cells
 from mosaic_classes import MosaicMetadata
@@ -14,14 +15,23 @@ def main(input_dir, generate_table, file_name, generate_graph,
 
     if generate_table:
         table = model_table(mosaic)
-        table.to_csv('C:/Users/lzoeckler/Desktop/mosaic_zygosity.csv', index=False)
+        table.to_csv('C:/Users/lzoeckler/Desktop/MOSAIC/mosaic_zygosity.csv', index=False)
 
     if generate_graph:
-        data = prep_fcs(file_name, mosaic)
+        file_path = '{}/{}.fcs'.format(mosaic.input_dir, file_name)
+        data = prep_fcs(file_path, mosaic)
         outputs = calc_bright_cells(data, mosaic)
-        fig, ax = plt.subplots()
+        pp = PdfPages('C:/Users/lzoeckler/Desktop/MOSAIC/test_graph.pdf')
+        f = plt.figure()
+        f.add_subplot()
         plt.plot(outputs.intensity, outputs.frequency)
         plt.plot(outputs.x_vals, outputs.y_vals, "o", color='k')
+        title = 'file: {}'.format(file_name)
+        plt.title(title)
+        plt.tight_layout()
+        pp.savefig(f)
+        plt.close()
+        pp.close()
 
 
 if __name__ == '__main__':
@@ -29,7 +39,7 @@ if __name__ == '__main__':
     parser.add_argument('-id', '--input_dir', type=str,
                         default='C:/Users/lzoeckler/Desktop/maria_data/Archive_facs',
                         help='Directory that contains FCS files')
-    parser.add_argument('-gt', '--generate_ztable', action='store_true',
+    parser.add_argument('-gt', '--generate_table', action='store_true',
                         help='Whether or not to generate the zygosity table')
     parser.add_argument('-fn', '--file_name', type=str,
                         default=None,
