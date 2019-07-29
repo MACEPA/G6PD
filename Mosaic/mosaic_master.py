@@ -7,7 +7,7 @@ from mosaic_classes import MosaicMetadata
 
 
 def main(input_dir, generate_table, file_name, generate_graph,
-         fsc_filt, ssc_filt, fl1, fsc, ssc, amplification,
+         output_dir, fsc_filt, ssc_filt, fl1, fsc, ssc, amplification,
          min_peak_size):
     mosaic = MosaicMetadata(input_dir, fsc_filt, ssc_filt,
                             fl1, fsc, ssc, amplification,
@@ -15,13 +15,13 @@ def main(input_dir, generate_table, file_name, generate_graph,
 
     if generate_table:
         table = model_table(mosaic)
-        table.to_csv('C:/Users/lzoeckler/Desktop/MOSAIC/mosaic_zygosity.csv', index=False)
+        table.to_csv('{}/mosaic_zygosity.csv'.format(output_dir), index=False)
 
     if generate_graph:
         file_path = '{}/{}.fcs'.format(mosaic.input_dir, file_name)
         data = prep_fcs(file_path, mosaic)
         outputs = calc_bright_cells(data, mosaic)
-        pp = PdfPages('C:/Users/lzoeckler/Desktop/MOSAIC/test_graph.pdf')
+        pp = PdfPages('{}/test_graph.pdf'.format(output_dir))
         f = plt.figure()
         f.add_subplot()
         plt.plot(outputs.intensity, outputs.frequency)
@@ -46,6 +46,9 @@ if __name__ == '__main__':
                         help='File name of the file to generate a graph of')
     parser.add_argument('-gg', '--generate_graph', action='store_true',
                         help='Whether or not to generate a brightness graph')
+    parser.add_argument('-od', '--output_dir', type=str,
+                        default='C:/Users/lzoeckler/Desktop/MOSAIC',
+                        help='Directory for outputting table and graph')
     parser.add_argument('-ff', '--fsc_filt', nargs='+',
                         default=[.4, .95],
                         help='Minimum and maximum FSC channel values')
@@ -64,10 +67,10 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--amplification', action='store_true',
                         help='Whether or not to run with amplification (log)')
     parser.add_argument('-mps', '--min_peak_size', type=float,
-                        default=.00003,
+                        default=.003,
                         help='Minimum peak height to keep')
     args = parser.parse_args()
     main(input_dir=args.input_dir, generate_table=args.generate_table, file_name=args.file_name,
-         generate_graph=args.generate_graph, fsc_filt=args.fsc_filt, ssc_filt=args.ssc_filt,
-         fl1=args.fl1, fsc=args.fsc, ssc=args.ssc, amplification=args.amplification,
+         generate_graph=args.generate_graph, output_dir=args.output_dir, fsc_filt=args.fsc_filt,
+         ssc_filt=args.ssc_filt, fl1=args.fl1, fsc=args.fsc, ssc=args.ssc, amplification=args.amplification,
          min_peak_size=args.min_peak_size)
