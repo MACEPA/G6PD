@@ -26,7 +26,7 @@ def main(input_dir, generate_table, file_name, generate_graph,
         f.add_subplot()
         plt.plot(outputs.intensity, outputs.frequency)
         plt.plot(outputs.x_vals, outputs.y_vals, "o", color='k')
-        title = 'file: {}'.format(file_name)
+        title = 'file: {}, threshold: {}'.format(file_name, min_peak_size)
         plt.title(title)
         plt.tight_layout()
         pp.savefig(f)
