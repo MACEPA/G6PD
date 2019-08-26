@@ -112,7 +112,7 @@ def calc_bright_cells(data, mosaic_object):
     if len(maxima) == 2:
         upper_freq = data.loc[data['intensity'] >= meanidx,
                               'freq']
-        bc_percent = round((100 * upper_freq.sum()), 1)
+        bc_percent = round((100 * (1 - upper_freq.sum())), 1)
     elif (len(maxima) == 1) & (maxima[0] > 75):
         exp_log_maxima = math.exp(math.log(maxima[0]) - .15)
         abs_condition = abs(data['intensity'] - exp_log_maxima)
@@ -120,7 +120,7 @@ def calc_bright_cells(data, mosaic_object):
         exp_log_val = max(exp_log_data['intensity'])
         exp_log_freq = exp_log_data.loc[
             exp_log_data['intensity'] >= exp_log_val, 'freq']
-        bc_percent = round((100 * exp_log_freq.sum()), 1)
+        bc_percent = round((100 * (1 - exp_log_freq.sum())), 1)
     elif (len(maxima) == 1) & (maxima[0] <= 75):
         exp_log_maxima = math.exp(math.log(maxima[0]) + .15)
         abs_condition = abs(data['intensity'] - exp_log_maxima)
@@ -128,7 +128,7 @@ def calc_bright_cells(data, mosaic_object):
         exp_log_val = max(exp_log_data['intensity'])
         exp_log_freq = exp_log_data.loc[
             exp_log_data['intensity'] >= exp_log_val, 'freq']
-        bc_percent = round((100 * exp_log_freq.sum()), 1)
+        bc_percent = round((100 * (1 - exp_log_freq.sum())), 1)
     else:
         raise ValueError('Something went wrong!')
 
